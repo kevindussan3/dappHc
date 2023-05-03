@@ -1,0 +1,61 @@
+pragma solidity ^0.8.0;
+
+contract HistoriaClinica {
+    // Estructura para representar un paciente
+    struct Paciente {
+        string nombre;
+        uint256 edad;
+        string genero;
+    }
+
+    // Estructura para representar un doctor
+    struct Doctor {
+        address direccion;
+        string nombre;
+    }
+
+    // Variables de estado
+    address public propietario;
+    mapping(address => bool) public doctores;
+    mapping(address => Paciente) public pacientes;
+    mapping(address => bool) public pacientesRegistrados;
+
+    // Eventos
+    event PacienteRegistrado(address indexed paciente, string nombre);
+    event DoctorAgregado(address indexed doctor, string nombre);
+    
+    // Modificadores
+    modifier soloPropietario() {
+        require(msg.sender == propietario, "Solo el propietario puede llamar a esta función");
+        _;
+    }
+    
+    modifier soloDoctor() {
+        require(doctores[msg.sender], "Solo los doctores pueden llamar a esta función");
+        _;
+    }
+
+    // Constructor
+    constructor() {
+        propietario = msg.sender;
+    }
+
+    // Función para agregar un doctor
+    function agregarDoctor(address direccion, string memory nombre) public soloPropietario {
+        doctores[direccion] = true;
+        emit DoctorAgregado(direccion, nombre);
+    }
+
+    // Función para verificar si una dirección es un doctor
+    function esDoctor(address direccion) public view returns (bool) {
+        return doctores[direccion];
+    }
+
+    // Función para agregar un paciente
+    function agregarPaciente(string memory nombre, uint256 edad, string memory genero) public {
+        require(!pacientesRegistrados[msg.sender], "El paciente ya está registrado");
+        pacientes[msg.sender] = Paciente(nombre, edad, genero);
+        pacientesRegistrados[msg.sender] = true;
+        emit PacienteRegistrado(msg.sender, nombre);
+    }
+}
